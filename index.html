@@ -60,16 +60,37 @@
 
 <script>
   // ======= CHỈ CẦN SỬA PHẦN NÀY =======
+  // Mỗi pack skin là 1 dòng. Mã (bên trái dấu :) dùng trong link:
+  //   https://taphu0610-collab.github.io/pack-skin/?s=MÃ
+  // Thêm pack mới: chép 1 dòng, đổi mã + tên + link.
+  const SKINS = {
+    skin1: { title: "Pack Skin 1", url: "https://drive.google.com/link-skin-1", image: "" },
+    skin2: { title: "Pack Skin 2", url: "https://drive.google.com/link-skin-2", image: "" },
+    skin3: { title: "Pack Skin 3", url: "https://drive.google.com/link-skin-3", image: "" },
+  };
+
   const CONFIG = {
-    title: "Pack Skin VIP",
     description: "Cảm ơn bạn đã ủng hộ! Bấm nút bên dưới để tải pack skin.",
-    downloadUrl: "https://drive.google.com/your-file-link",   // link file pack skin (Drive, Mediafire...)
     buttonText: "⬇ TẢI PACK SKIN",
-    previewImage: "",            // link ảnh xem trước (để trống nếu không có)
     waitSeconds: 3,              // số giây đếm ngược trước khi nút mở
     extraLink: { text: "Tham gia nhóm để nhận skin mới", url: "" } // để url trống để ẩn
   };
   // ====================================
+
+  const id = new URLSearchParams(location.search).get("s");
+  const skin = SKINS[id];
+  if (!skin) {
+    document.querySelector(".badge").remove();
+    document.getElementById("preview").remove();
+    document.getElementById("title").textContent = "Link không hợp lệ";
+    document.getElementById("desc").textContent = "Không tìm thấy pack skin này. Hãy lấy lại link từ người chia sẻ.";
+    document.getElementById("btn").remove();
+    throw new Error("unknown skin id");
+  }
+  CONFIG.title = skin.title;
+  CONFIG.downloadUrl = skin.url;
+  CONFIG.previewImage = skin.image;
+  document.title = "Tải " + skin.title;
 
   document.getElementById("title").textContent = CONFIG.title;
   document.getElementById("desc").textContent = CONFIG.description;
