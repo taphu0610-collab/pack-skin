@@ -48,7 +48,7 @@
   <div class="box" id="loginBox">
     <h2>Đăng nhập</h2>
     <label>GitHub token (chỉ lưu trên máy bạn)</label>
-    <input type="password" id="token" placeholder="github_pat_...">
+    <input type="text" id="token" placeholder="github_pat_..." autocomplete="off" spellcheck="false" style="-webkit-text-security:disc">
     <div class="row" style="margin-top:12px">
       <button id="loginBtn">Đăng nhập</button>
     </div>
@@ -261,7 +261,14 @@
     } finally { $("loginBtn").disabled = false; }
   }
 
-  $("loginBtn").onclick = () => { token = $("token").value.trim(); if (token) login(); };
+  $("loginBtn").onclick = () => {
+    token = $("token").value.trim();
+    if (!/^(github_pat_|ghp_)/.test(token) || token.length < 30) {
+      alert("Đây không phải GitHub token.\nToken phải bắt đầu bằng github_pat_ và rất dài (khoảng 90 ký tự).\nKhông nhập mật khẩu GitHub vào đây.");
+      return;
+    }
+    login();
+  };
   $("token").onkeydown = e => { if (e.key === "Enter") $("loginBtn").click(); };
   $("logoutBtn").onclick = () => { localStorage.removeItem("ghToken"); location.reload(); };
 
