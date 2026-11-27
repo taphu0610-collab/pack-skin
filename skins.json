@@ -1,5 +1,22 @@
 {
-  "skin1": { "title": "Pack Skin 1", "url": "https://drive.google.com/link-skin-1", "image": "" },
-  "skin2": { "title": "Pack Skin 2", "url": "https://drive.google.com/link-skin-2", "image": "" },
-  "skin3": { "title": "Pack Skin 3", "url": "https://drive.google.com/link-skin-3", "image": "" }
+  "skin1": {
+    "title": "Pack Skin 1",
+    "url": "https://drive.google.com/link-skin-1",
+    "image": ""
+  },
+  "skin2": {
+    "title": "Pack Skin 2",
+    "url": "https://drive.google.com/link-skin-2",
+    "image": ""
+  },
+  "skin3": {
+    "title": "Pack Skin 3",
+    "url": "https://drive.google.com/link-skin-3",
+    "image": ""
+  },
+  "bilow-truc-hoa-quy-hai": {
+    "title": "Bilow Trục Hoa Quy Hải",
+    "url": "https://drive.google.com/drive/folders/1pI65M_n7RIpVfrk-EE5Pn82FuwXkqvEe?hl=vi",
+    "image": ""
+  }
 }
