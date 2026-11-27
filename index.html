@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tải Pack Skin</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    min-height: 100vh;
+    display: flex; align-items: center; justify-content: center;
+    font-family: "Segoe UI", Roboto, Arial, sans-serif;
+    background: radial-gradient(circle at top, #2b1d5c, #0d0a1f 70%);
+    color: #fff; padding: 20px;
+  }
+  .card {
+    width: 100%; max-width: 440px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 18px; padding: 32px 26px; text-align: center;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  }
+  .badge {
+    display: inline-block; background: #22c55e; color: #052e14;
+    font-weight: 700; font-size: 13px; padding: 5px 12px; border-radius: 999px;
+    margin-bottom: 16px;
+  }
+  .preview {
+    width: 100%; aspect-ratio: 16/9; object-fit: cover;
+    border-radius: 12px; margin-bottom: 18px; background: #1e1640;
+  }
+  h1 { font-size: 24px; margin-bottom: 8px; }
+  p.desc { color: #c9c3e6; font-size: 15px; line-height: 1.5; margin-bottom: 22px; }
+  .btn {
+    display: block; width: 100%; padding: 16px;
+    background: linear-gradient(90deg, #f59e0b, #ef4444);
+    color: #fff; font-size: 18px; font-weight: 700; text-decoration: none;
+    border-radius: 12px; border: none; cursor: pointer;
+    transition: transform .15s, box-shadow .15s;
+  }
+  .btn:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(239,68,68,0.45); }
+  .btn.disabled { background: #4b4570; pointer-events: none; }
+  .note { margin-top: 16px; font-size: 13px; color: #9a93c2; }
+  .extra { margin-top: 10px; }
+  .extra a { color: #8ab4ff; font-size: 14px; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <span class="badge">✔ Vượt link thành công</span>
+    <img class="preview" id="preview" alt="Ảnh pack skin">
+    <h1 id="title"></h1>
+    <p class="desc" id="desc"></p>
+
+    <a class="btn disabled" id="btn" href="#" target="_blank" rel="noopener">Vui lòng đợi <span id="count"></span>s...</a>
+
+    <p class="note">Nếu nút không hoạt động, hãy tải lại trang.</p>
+    <div class="extra" id="extra"></div>
+  </div>
+
+<script>
+  // ======= CHỈ CẦN SỬA PHẦN NÀY =======
+  const CONFIG = {
+    title: "Pack Skin VIP",
+    description: "Cảm ơn bạn đã ủng hộ! Bấm nút bên dưới để tải pack skin.",
+    downloadUrl: "https://drive.google.com/your-file-link",   // link file pack skin (Drive, Mediafire...)
+    buttonText: "⬇ TẢI PACK SKIN",
+    previewImage: "",            // link ảnh xem trước (để trống nếu không có)
+    waitSeconds: 3,              // số giây đếm ngược trước khi nút mở
+    extraLink: { text: "Tham gia nhóm để nhận skin mới", url: "" } // để url trống để ẩn
+  };
+  // ====================================
+
+  document.getElementById("title").textContent = CONFIG.title;
+  document.getElementById("desc").textContent = CONFIG.description;
+
+  const img = document.getElementById("preview");
+  if (CONFIG.previewImage) img.src = CONFIG.previewImage; else img.remove();
+
+  if (CONFIG.extraLink.url) {
+    const a = document.createElement("a");
+    a.href = CONFIG.extraLink.url; a.target = "_blank"; a.rel = "noopener";
+    a.textContent = CONFIG.extraLink.text;
+    document.getElementById("extra").appendChild(a);
+  }
+
+  const btn = document.getElementById("btn");
+  let left = CONFIG.waitSeconds;
+  const countEl = document.getElementById("count");
+  countEl.textContent = left;
+  const timer = setInterval(() => {
+    left--;
+    if (left > 0) { countEl.textContent = left; return; }
+    clearInterval(timer);
+    btn.textContent = CONFIG.buttonText;
+    btn.href = CONFIG.downloadUrl;
+    btn.classList.remove("disabled");
+  }, 1000);
+</script>
+</body>
+</html>
