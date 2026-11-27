@@ -58,16 +58,12 @@
     <div class="extra" id="extra"></div>
   </div>
 
-<script>
-  // ======= CHỈ CẦN SỬA PHẦN NÀY =======
-  // Mỗi pack skin là 1 dòng. Mã (bên trái dấu :) dùng trong link:
-  //   https://taphu0610-collab.github.io/pack-skin/?s=MÃ
-  // Thêm pack mới: chép 1 dòng, đổi mã + tên + link.
-  const SKINS = {
-    skin1: { title: "Pack Skin 1", url: "https://drive.google.com/link-skin-1", image: "" },
-    skin2: { title: "Pack Skin 2", url: "https://drive.google.com/link-skin-2", image: "" },
-    skin3: { title: "Pack Skin 3", url: "https://drive.google.com/link-skin-3", image: "" },
-  };
+<script type="module">
+  // Danh sách pack skin nằm trong skins.json — thêm/sửa bằng trang admin.html
+  let SKINS = {};
+  try {
+    SKINS = await (await fetch("skins.json?t=" + Date.now(), { cache: "no-store" })).json();
+  } catch (e) {}
 
   const CONFIG = {
     description: "Cảm ơn bạn đã ủng hộ! Bấm nút bên dưới để tải pack skin.",

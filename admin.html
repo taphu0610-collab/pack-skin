@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>Quản lý Pack Skin</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: "Segoe UI", Roboto, Arial, sans-serif; background: #0f0c22; color: #eee; }
+  .wrap { max-width: 900px; margin: 0 auto; padding: 24px 16px 60px; }
+  h1 { font-size: 24px; margin: 0 0 18px; }
+  h2 { font-size: 17px; margin: 0 0 12px; }
+  .box { background: #1b1638; border: 1px solid #2f2860; border-radius: 12px; padding: 18px; margin-bottom: 18px; }
+  label { display: block; font-size: 13px; color: #b9b2e0; margin: 10px 0 4px; }
+  input[type=text], input[type=password] {
+    width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid #3a3370;
+    background: #0f0c22; color: #fff; font-size: 14px;
+  }
+  input[type=file] { color: #b9b2e0; font-size: 13px; }
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .or { font-size: 12px; color: #7d76a8; }
+  button {
+    padding: 10px 16px; border: none; border-radius: 8px; cursor: pointer;
+    font-size: 14px; font-weight: 600; background: #3b82f6; color: #fff;
+  }
+  button.green { background: #22c55e; color: #052e14; }
+  button.gray { background: #3a3370; }
+  button.red { background: #ef4444; }
+  button:disabled { opacity: .5; cursor: wait; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid #2f2860; vertical-align: top; }
+  th { color: #b9b2e0; font-weight: 600; font-size: 13px; }
+  td.link { word-break: break-all; font-size: 12px; color: #9ec1ff; }
+  td.actions { white-space: nowrap; }
+  td.actions button { padding: 6px 10px; font-size: 12px; margin: 2px; }
+  #status { margin-top: 12px; font-size: 14px; min-height: 20px; }
+  .ok { color: #4ade80; } .err { color: #f87171; }
+  .hint { font-size: 12px; color: #7d76a8; margin-top: 8px; line-height: 1.5; }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🎮 Quản lý Pack Skin</h1>
+
+  <!-- Đăng nhập bằng token -->
+  <div class="box" id="loginBox">
+    <h2>Đăng nhập</h2>
+    <label>GitHub token (chỉ lưu trên máy bạn)</label>
+    <input type="password" id="token" placeholder="github_pat_...">
+    <div class="row" style="margin-top:12px">
+      <button id="loginBtn">Đăng nhập</button>
+    </div>
+    <p class="hint">Token chỉ được lưu trong trình duyệt này. Không gửi token cho ai khác.</p>
+  </div>
+
+  <div id="app" class="hidden">
+    <!-- Form thêm / sửa -->
+    <div class="box">
+      <h2 id="formTitle">➕ Thêm pack skin</h2>
+      <label>Tên pack</label>
+      <input type="text" id="fTitle" placeholder="VD: Pack Skin Tết 2027">
+
+      <label>Mã pack (dùng trong link, để trống sẽ tự tạo)</label>
+      <input type="text" id="fId" placeholder="VD: tet2027">
+
+      <label>File pack skin</label>
+      <div class="row">
+        <input type="text" id="fUrl" placeholder="Dán link Drive / Mediafire..." style="flex:1;min-width:220px">
+        <span class="or">hoặc</span>
+        <input type="file" id="fFile">
+      </div>
+      <p class="hint">Tải file thẳng lên chỉ được file dưới 25 MB. File lớn hơn thì up lên Drive/Mediafire rồi dán link.</p>
+
+      <label>Ảnh xem trước (không bắt buộc)</label>
+      <div class="row">
+        <input type="text" id="fImage" placeholder="Dán link ảnh..." style="flex:1;min-width:220px">
+        <span class="or">hoặc</span>
+        <input type="file" id="fImageFile" accept="image/*">
+      </div>
+
+      <div class="row" style="margin-top:16px">
+        <button class="green" id="saveBtn">💾 Lưu pack</button>
+        <button class="gray hidden" id="cancelBtn">Hủy sửa</button>
+      </div>
+      <div id="status"></div>
+    </div>
+
+    <!-- Danh sách -->
+    <div class="box">
+      <h2>📦 Danh sách pack (<span id="count">0</span>)</h2>
+      <table>
+        <thead><tr><th>Tên</th><th>Link để rút gọn ở Link4M</th><th></th></tr></thead>
+        <tbody id="list"></tbody>
+      </table>
+      <p class="hint">Sau khi lưu, đợi khoảng 1 phút để trang cập nhật trên mạng.</p>
+      <div class="row" style="margin-top:10px">
+        <button class="gray" id="logoutBtn">Đăng xuất</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const OWNER = "taphu0610-collab";
+  const REPO = "pack-skin";
+  const SITE = `https://${OWNER}.github.io/${REPO}/`;
+  const API = `https://api.github.com/repos/${OWNER}/${REPO}/contents/`;
+  const MAX_UPLOAD = 25 * 1024 * 1024;
+
+  let token = localStorage.getItem("ghToken") || "";
+  let skins = {};
+  let skinsSha = null;
+  let editingId = null;
+
+  const $ = id => document.getElementById(id);
+
+  function setStatus(msg, cls = "") { $("status").className = cls; $("status").textContent = msg; }
+
+  async function gh(path, opts = {}) {
+    const res = await fetch(API + path, {
+      ...opts,
+      headers: { Authorization: "Bearer " + token, Accept: "application/vnd.github+json", ...(opts.headers || {}) }
+    });
+    if (!res.ok) {
+      let msg = res.status + "";
+      try { msg += " " + (await res.json()).message; } catch (e) {}
+      throw new Error(msg);
+    }
+    return res.json();
+  }
+
+  // UTF-8 <-> base64
+  const toB64 = str => { const b = new TextEncoder().encode(str); let s = ""; b.forEach(c => s += String.fromCharCode(c)); return btoa(s); };
+  const fromB64 = b64 => new TextDecoder().decode(Uint8Array.from(atob(b64.replace(/\n/g, "")), c => c.charCodeAt(0)));
+  const fileToB64 = file => new Promise((ok, fail) => {
+    const r = new FileReader();
+    r.onload = () => ok(r.result.split(",")[1]);
+    r.onerror = fail;
+    r.readAsDataURL(file);
+  });
+
+  async function loadSkins() {
+    const data = await gh("skins.json?t=" + Date.now());
+    skins = JSON.parse(fromB64(data.content));
+    skinsSha = data.sha;
+    render();
+  }
+
+  async function saveSkins(message) {
+    const data = await gh("skins.json", {
+      method: "PUT",
+      body: JSON.stringify({ message, content: toB64(JSON.stringify(skins, null, 2) + "\n"), sha: skinsSha })
+    });
+    skinsSha = data.content.sha;
+  }
+
+  async function uploadFile(file, folder) {
+    if (file.size > MAX_UPLOAD) throw new Error(`File "${file.name}" nặng quá 25 MB, hãy up lên Drive/Mediafire rồi dán link.`);
+    const safe = file.name.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-zA-Z0-9._-]/g, "_");
+    const path = `${folder}/${Date.now()}-${safe}`;
+    await gh(path, { method: "PUT", body: JSON.stringify({ message: "Upload " + safe, content: await fileToB64(file) }) });
+    return SITE + path;
+  }
+
+  function slug(text) {
+    return text.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/gi, "d")
+      .toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 30);
+  }
+
+  function render() {
+    const ids = Object.keys(skins);
+    $("count").textContent = ids.length;
+    const tbody = $("list");
+    tbody.innerHTML = "";
+    ids.forEach(id => {
+      const link = SITE + "?s=" + encodeURIComponent(id);
+      const tr = document.createElement("tr");
+      const tdName = document.createElement("td");
+      tdName.textContent = skins[id].title;
+      const tdLink = document.createElement("td");
+      tdLink.className = "link"; tdLink.textContent = link;
+      const tdAct = document.createElement("td");
+      tdAct.className = "actions";
+      const mk = (text, cls, fn) => { const b = document.createElement("button"); b.textContent = text; b.className = cls; b.onclick = fn; tdAct.appendChild(b); };
+      mk("📋 Copy", "", () => { navigator.clipboard.writeText(link); setStatus("Đã copy link của " + skins[id].title, "ok"); });
+      mk("✏️ Sửa", "gray", () => startEdit(id));
+      mk("🗑 Xóa", "red", () => removeSkin(id));
+      tr.append(tdName, tdLink, tdAct);
+      tbody.appendChild(tr);
+    });
+  }
+
+  function resetForm() {
+    editingId = null;
+    ["fTitle", "fId", "fUrl", "fImage"].forEach(i => $(i).value = "");
+    $("fFile").value = ""; $("fImageFile").value = "";
+    $("fId").disabled = false;
+    $("formTitle").textContent = "➕ Thêm pack skin";
+    $("cancelBtn").classList.add("hidden");
+  }
+
+  function startEdit(id) {
+    editingId = id;
+    const s = skins[id];
+    $("fTitle").value = s.title; $("fId").value = id; $("fId").disabled = true;
+    $("fUrl").value = s.url; $("fImage").value = s.image || "";
+    $("formTitle").textContent = "✏️ Sửa pack: " + s.title;
+    $("cancelBtn").classList.remove("hidden");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  async function removeSkin(id) {
+    if (!confirm(`Xóa pack "${skins[id].title}"? Link Link4M của pack này sẽ thành "Link không hợp lệ".`)) return;
+    const backup = skins[id];
+    delete skins[id];
+    try { await saveSkins("Remove " + id); render(); setStatus("Đã xóa.", "ok"); }
+    catch (e) { skins[id] = backup; setStatus("Lỗi: " + e.message, "err"); }
+  }
+
+  $("saveBtn").onclick = async () => {
+    const title = $("fTitle").value.trim();
+    if (!title) return setStatus("Bạn chưa nhập tên pack.", "err");
+    let id = editingId || slug($("fId").value.trim() || title) || ("skin" + Date.now());
+    if (!editingId && skins[id]) return setStatus(`Mã "${id}" đã có rồi, hãy đặt mã khác.`, "err");
+
+    const btn = $("saveBtn"); btn.disabled = true;
+    try {
+      let url = $("fUrl").value.trim();
+      let image = $("fImage").value.trim();
+      if ($("fFile").files[0]) { setStatus("Đang tải file lên..."); url = await uploadFile($("fFile").files[0], "files"); }
+      if ($("fImageFile").files[0]) { setStatus("Đang tải ảnh lên..."); image = await uploadFile($("fImageFile").files[0], "images"); }
+      if (!url) throw new Error("Bạn chưa dán link hoặc chọn file pack skin.");
+
+      setStatus("Đang lưu...");
+      await loadSkins(); // lấy bản mới nhất trước khi ghi
+      skins[id] = { title, url, image };
+      await saveSkins((editingId ? "Update " : "Add ") + id);
+      render(); resetForm();
+      const link = SITE + "?s=" + id;
+      navigator.clipboard?.writeText(link).catch(() => {});
+      setStatus("✔ Đã lưu! Link (đã copy): " + link, "ok");
+    } catch (e) {
+      setStatus("Lỗi: " + e.message, "err");
+    } finally { btn.disabled = false; }
+  };
+
+  $("cancelBtn").onclick = () => { resetForm(); setStatus(""); };
+
+  async function login() {
+    $("loginBtn").disabled = true;
+    try {
+      await loadSkins();
+      localStorage.setItem("ghToken", token);
+      $("loginBox").classList.add("hidden");
+      $("app").classList.remove("hidden");
+    } catch (e) {
+      alert("Đăng nhập không được: " + e.message + "\nKiểm tra lại token.");
+      localStorage.removeItem("ghToken");
+    } finally { $("loginBtn").disabled = false; }
+  }
+
+  $("loginBtn").onclick = () => { token = $("token").value.trim(); if (token) login(); };
+  $("token").onkeydown = e => { if (e.key === "Enter") $("loginBtn").click(); };
+  $("logoutBtn").onclick = () => { localStorage.removeItem("ghToken"); location.reload(); };
+
+  if (token) login();
+</script>
+</body>
+</html>
